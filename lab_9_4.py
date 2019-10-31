@@ -33,23 +33,38 @@ CONVERT_DICT = {
     3000: 'MMM'
 }
 
+SEQUENCE_RULE = 'IVXLCDM'
+
 
 def invert_dict(dictionary):
     return {v: k for k, v in dictionary.items()}
 
 
-def _is_in_bounds_arabic(arabic_number):
+def _validate_arabic(arabic_number):
     return 0 <= int(arabic_number) < 4000
 
 
-def _is_in_bounds_roman(roman_number):
-    thousand_symbol = 'M'
-    thousand_count = 0
-    thousand_count_allowed = 3
+def _validate_roman(roman_number):
+    one_type_symbols_allowed = 4
+    one_type_symbols_in_row_allowed = 3
+    symbols_presented = {}
+    valid_symbols = True
+    previous_symbol = None
     for sym in roman_number:
-        if sym == thousand_symbol:
-            thousand_count += 1
-    return thousand_count <= thousand_count_allowed
+        if sym not in CONVERT_DICT.values():
+            valid_symbols = False
+            break
+        if sym not in symbols_presented.keys():
+            symbols_presented.update({sym: {'in_row': 1, 'general': 1}})
+        else:
+            if sym == previous_symbol:
+                symbols_presented[sym]['in_row'] += 1
+            symbols_presented[sym]['general'] += 1
+
+    return len(list(filter(lambda s: symbols_presented[s]['general'] > one_type_symbols_allowed,
+                           symbols_presented))) == 0 and \
+           len(list(filter(lambda s: symbols_presented[s]['in_row'] > one_type_symbols_in_row_allowed,
+                           symbols_presented))) == 0 and valid_symbols
 
 
 def _convert_to_roman(arabic_number):
@@ -63,22 +78,23 @@ def _convert_to_roman(arabic_number):
 
 
 def _convert_to_arabic(roman_number):
-    sequence_rule = 'IVXLCDM'
     arabic_number = 0
     convert_dict = invert_dict(CONVERT_DICT)
 
-    previous_symbol = None
-    temp_sum = 0
+    next_symbol = None
+    current_symbol_position = 0
     for s in roman_number:
-        if s not in sequence_rule:
+        if s not in SEQUENCE_RULE:
             raise ValueError
-        temp_sum += convert_dict[s]
 
-        if previous_symbol and sequence_rule.find(s) < sequence_rule.find(previous_symbol):
-            arabic_number -= temp_sum
+        if current_symbol_position < len(roman_number) - 1:
+            next_symbol = roman_number[current_symbol_position + 1]
+
+        if next_symbol and SEQUENCE_RULE.find(s) < SEQUENCE_RULE.find(next_symbol):
+            arabic_number -= convert_dict[s]
         else:
-            arabic_number += temp_sum
-        previous_symbol = s
+            arabic_number += convert_dict[s]
+        current_symbol_position += 1
 
     return arabic_number
 
@@ -93,13 +109,13 @@ def fetch_number_data(user_input):
         if not str(i).isdigit():
             break
     else:
-        return {'validator': _is_in_bounds_arabic, 'handler': _convert_to_roman, 'number': user_input}
+        return {'validator': _validate_arabic, 'handler': _convert_to_roman, 'number': user_input}
 
     for i in user_input:
-        if i not in ('I', 'V', 'X', 'L', 'C', 'M'):
+        if i not in SEQUENCE_RULE:
             break
     else:
-        return {'validator': _is_in_bounds_roman, 'handler': _convert_to_arabic, 'number': user_input}
+        return {'validator': _validate_roman, 'handler': _convert_to_arabic, 'number': user_input}
 
     raise ValueError
 
@@ -110,7 +126,7 @@ def main():
         number_data = fetch_number_data(user_input)
         validator = number_data['validator']
         if not validator(number_data['number']):
-            print("Number out of bounds")
+            print("Number validation exception")
             raise ValueError
         print(convert(number_data))
     except ValueError:
