@@ -66,10 +66,19 @@ def _convert_to_arabic(roman_number):
     sequence_rule = 'IVXLCDM'
     arabic_number = 0
     convert_dict = invert_dict(CONVERT_DICT)
+
+    previous_symbol = None
+    temp_sum = 0
     for s in roman_number:
-        temp_sum = 0
         if s not in sequence_rule:
             raise ValueError
+        temp_sum += convert_dict[s]
+
+        if previous_symbol and sequence_rule.find(s) < sequence_rule.find(previous_symbol):
+            arabic_number -= temp_sum
+        else:
+            arabic_number += temp_sum
+        previous_symbol = s
 
     return arabic_number
 
