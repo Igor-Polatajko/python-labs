@@ -1,140 +1,101 @@
 #!/usr/bin/env python
+from math import floor
 
-
-# Python program implementing Image Steganography
-
-# PIL module is used to extract
-# pixels of image and modify it
 from PIL import Image
 
 
-# Convert encoding data into 8-bit binary
-# form using ASCII value of characters
-def genData(data):
-    # list of binary codes
-    # of given data
-    newd = []
-
-    for i in data:
-        newd.append(format(ord(i), '08b'))
-    return newd
+def read_img_from_file(file_path):
+    return Image.open(file_path, 'r').copy()
 
 
-# Pixels are modified according to the
-# 8-bit binary data and finally returned
-def modPix(pix, data):
-    datalist = genData(data)
-    lendata = len(datalist)
-    imdata = iter(pix)
-
-    for i in range(lendata):
-
-        # Extracting 3 pixels at a time
-        pix = [value for value in imdata.__next__()[:3] +
-               imdata.__next__()[:3] +
-               imdata.__next__()[:3]]
-
-        # Pixel value should be made
-        # odd for 1 and even for 0
-        for j in range(0, 8):
-            if (datalist[i][j] == '0') and (pix[j] % 2 != 0):
-
-                if pix[j] % 2 != 0:
-                    pix[j] -= 1
-
-            elif (datalist[i][j] == '1') and (pix[j] % 2 == 0):
-                pix[j] -= 1
-
-        # Eigh^th pixel of every set tells
-        # whether to stop ot read further.
-        # 0 means keep reading; 1 means the
-        # message is over.
-        if i == lendata - 1:
-            if pix[-1] % 2 == 0:
-                pix[-1] -= 1
-        else:
-            if pix[-1] % 2 != 0:
-                pix[-1] -= 1
-
-        pix = tuple(pix)
-        yield pix[0:3]
-        yield pix[3:6]
-        yield pix[6:9]
+def str_to_bin(string):
+    return list(format(ord(c), '#010b')[2::] for c in string)
 
 
-def encode_enc(newimg, data):
-    w = newimg.size[0]
-    (x, y) = (0, 0)
-
-    for pixel in modPix(newimg.getdata(), data):
-
-        # Putting modified pixels in the new image
-        newimg.putpixel((x, y), pixel)
-        if x == w - 1:
-            x = 0
-            y += 1
-        else:
-            x += 1
+def calc_indent(x, y, word_len=160):
+    return floor((x * y / word_len) ** (1 / 2))
 
 
-# Encode data into image
-def encode():
-    img = input("Enter image name(with extension): ")
-    image = Image.open(img, 'r')
+def encode(img, string):
+    pixels = img.load()
+    binary = str_to_bin(string)
+    indent = calc_indent(img.size[0], img.size[1])
 
-    data = input("Enter data to be encoded : ")
-    if len(data) == 0:
-        raise ValueError('Data is empty')
+    it = 0
+    x_indent = 0
+    y_indent = 0
+    while it < len(binary):
+        if x_indent >= img.size[0]:
+            y_indent += indent
+            x_indent = 0
+            if y_indent >= img.size[0]:
+                break
 
-    newimg = image.copy()
-    encode_enc(newimg, data)
+        p = pixels[x_indent, y_indent]
+        pixels[x_indent, y_indent] = (p[0], p[1], int(binary[it], 2), 255)
 
-    new_img_name = input("Enter the name of new image(with extension): ")
-    newimg.save(new_img_name, str(new_img_name.split(".")[1].upper()))
+        x_indent += indent
+        it += 1
+    pixels[x_indent, y_indent] = 0
+
+    return img
 
 
-# Decode the data in the image
-def decode():
-    img = input("Enter image name(with extension) :")
-    image = Image.open(img, 'r')
+def decode(img):
+    result = ''
+    pixels = img.load()
+    indent = calc_indent(img.size[0], img.size[1])
 
-    data = ''
-    imgdata = iter(image.getdata())
-
+    it = 0
+    x_indent = 0
+    y_indent = 0
     while True:
-        pixels = [value for value in imgdata.__next__()[:3] +
-                  imgdata.__next__()[:3] +
-                  imgdata.__next__()[:3]]
-        # string of binary data
-        binstr = ''
+        if x_indent >= img.size[0]:
+            y_indent += indent
+            x_indent = 0
+            if y_indent >= img.size[1]:
+                break
+        if pixels[x_indent, y_indent][2] == 0:
+            break
 
-        for i in pixels[:8]:
-            if i % 2 == 0:
-                binstr += '0'
-            else:
-                binstr += '1'
+        result += chr(pixels[x_indent, y_indent][2])
 
-        data += chr(int(binstr, 2))
-        if pixels[-1] % 2 != 0:
-            return data
-
-        # Main Function
+        x_indent += indent
+        it += 1
+    return result
 
 
 def main():
-    a = int(input(":: Welcome to Steganography ::\n"
-                  "1. Encode\n 2. Decode\n"))
-    if a == 1:
-        encode()
+    while True:
+        print("""Hello! What would you like to do?
+                 [1] - encode data
+                 [2] - decode data
+                 """)
+        try:
+            user_input = int(input("Your choice: "))
+            if user_input not in (1, 2):
+                raise ValueError
+            break
+        except ValueError:
+            print("Incorrect input!\n")
 
-    elif a == 2:
-        print("Decoded word- " + decode())
+    if user_input == 1:
+        try:
+            file_path = input("Provide path to file to encode data in: ")
+            string_to_encode = input("Provide string to encode: ")
+            output_image_path = input("Provide path to output file: ")
+
+            img = read_img_from_file(file_path)
+            img = encode(img, string_to_encode)
+            img.save(output_image_path)
+        except FileNotFoundError:
+            print("File not found!")
     else:
-        raise Exception("Enter correct input")
-
-    # Driver Code
+        encoded_file_path = input("Provide path to encoded file: ")
+        img_from_file = read_img_from_file(encoded_file_path)
+        print("Encoded data:")
+        print(decode(img_from_file))
 
 
 if __name__ == '__main__':
-    # Calling main function
     main()
