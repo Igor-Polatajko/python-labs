@@ -1,6 +1,6 @@
 #!/usr/bin/env python
+import abc
 import copy
-import os
 
 
 class ToDoItem:
@@ -46,66 +46,54 @@ class ToDoItemDao:
         self.__collection = list(filter(lambda it: it.item_id != item_id, self.__collection))
 
 
-class View:
-    def show_menu(self):
+class AbstractViewItem(abc.ABC):
+    @abc.abstractmethod
+    def handle_choice(self, user_choice):
+        pass
+
+    @abc.abstractmethod
+    def show(self):
+        pass
+
+
+class MainMenuItem(AbstractViewItem):
+    def show(self):
         print("""
 ####### Menu: #######
     Show all     - 1
     Search       - 2
     Add / Modify - 3
     Delete       - 4
+    Exit         - 0
 ####################
-        """)
+""")
 
-    def show_to_do_list(self, items, sort_by='item_id'):
-        items.sort(key=lambda it: getattr(it, sort_by))
-        print("###### Items: ######")
-        for item in items:
-            print(f"{item}")
-        print("####################\n")
+    def handle_choice(self, user_choice):
+        pass
 
-    @staticmethod
-    def show_error_message_if_present(method_to_execute):
-        def wrapper(*args):
-            try:
-                return method_to_execute(args[0], args[1])
-            except:
-                View.show_message("Some exception occurred")
 
-        return wrapper
+class ToDoList(AbstractViewItem):
+    def show(self):
+        print("""
+####### Menu: #######
+    Show all     - 1
+    Search       - 2
+    Add / Modify - 3
+    Delete       - 4
+    Exit         - 0
+####################
+""")
 
-    @staticmethod
-    def show_message(message):
-        print(f"\n## {message} ##\n")
+    def handle_choice(self, user_choice):
+        pass
 
 
 class Controller:
-    def __init__(self, view, item_dao):
-        self.view = view
+    def __init__(self, item_dao):
         self.item_dao = item_dao
 
     def run_app(self):
         self.__init_with_mock_data()
-
-        while True:
-            self.view.show_menu()
-            executed_successfully = self.__handle_menu_choice(self.__get_user_input_integer("Your choice"))
-            if not executed_successfully:
-                self.view.show_message("Choose number from the menu list")
-            os.system('pause')
-
-    def __handle_menu_choice(self, user_choice):
-        if user_choice == 1:
-            self.view.show_to_do_list(self.item_dao.find_all())
-            return True
-        return False
-
-    @View.show_error_message_if_present
-    def __get_user_input_integer(self, message):
-        return int(self.__get_user_input_string(f"{message}: "))
-
-    def __get_user_input_string(self, message):
-        return input(message)
 
     def __init_with_mock_data(self):
         for item in self.__get_mock_data():
@@ -116,9 +104,8 @@ class Controller:
 
 
 def main():
-    view = View()
     item_dao = ToDoItemDao()
-    controller = Controller(view, item_dao)
+    controller = Controller(item_dao)
     controller.run_app()
 
 
