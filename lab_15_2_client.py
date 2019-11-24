@@ -1,18 +1,23 @@
 #!/usr/bin/env python
 import socket
 
+HEADER_LENGTH = 10
+
 
 class Client:
     def __init__(self, connection_socket):
         self.__connection_socket = connection_socket
 
     def receive_message(self):
-        message_len = int(self.__connection_socket.recv(10).decode('utf-8'))
-        return self.__connection_socket.recv(message_len).decode('utf-8')
+        user_len = int(self.__connection_socket.recv(HEADER_LENGTH).decode('utf-8'))
+        user = self.__connection_socket.recv(user_len).decode('utf-8')
+        message_len = int(self.__connection_socket.recv(HEADER_LENGTH).decode('utf-8'))
+        message = self.__connection_socket.recv(message_len).decode('utf-8')
+        return {'user': user, 'data': message}
 
     def send_message(self, message):
-        self.__connection_socket.send(str(len(message)).encode('utf-8'))
-        self.__connection_socket.send(message.encode('utf-8'))
+        self.__connection_socket.send(f"{len(message):<{HEADER_LENGTH}}".encode('utf-8')
+                                      + message.encode('utf-8'))
 
 
 def main():
@@ -30,7 +35,8 @@ def main():
     client.send_message(username)
     while True:
         try:
-            print(f"User: {client.receive_message()}")
+            message = client.receive_message()
+            print(f"{message['user']}: {message['data']}")
         except ConnectionAbortedError or ConnectionResetError:
             break
     connection_socket.close()
