@@ -59,5 +59,5 @@ class Server:
         try:
             message_len = int(client.recv(HEADER_LENGTH).decode('utf-8'))
             return client.recv(message_len).decode('utf-8')
-        except ConnectionResetError:
+        except Exception:
             return False
