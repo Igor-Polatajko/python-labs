@@ -1,5 +1,4 @@
 import select
-from time import sleep
 
 SERVER_NAME = 'Server'
 HEADER_LENGTH = 10
@@ -12,6 +11,7 @@ class Server:
         self.client_sockets = dict()
 
     def serve(self):
+        print("Start listening")
         self.socket.listen()
 
         while True:

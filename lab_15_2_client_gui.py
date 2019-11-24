@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import socket
+import threading
 from tkinter import Tk, Listbox, Scrollbar, END, Text, Button, W, Toplevel, Label, Entry
 
 from socketClient import Client
@@ -14,9 +15,9 @@ class ClientUI:
         self.client = client
 
         master.title("Chatroom")
-        master.geometry("560x350")
+        master.geometry("720x350")
 
-        self.messages_list = Listbox(self.master, height=12, width=75, border=1)
+        self.messages_list = Listbox(self.master, height=12, width=75, border=1, font=("Helvetica", 11))
         self.messages_list.grid(row=1, column=0, pady=20)
         self.scrollbar = Scrollbar(self.master)
         self.scrollbar.grid(row=1, column=1, sticky=W)
@@ -25,14 +26,22 @@ class ClientUI:
         self.scrollbar.configure(command=self.messages_list.yview)
 
         self.message_input = Text(self.master, height=4, width=50)
-        self.message_input.grid(row=2, column=0, rowspan=4, padx=50)
+        self.message_input.grid(row=2, column=0, rowspan=4, padx=40)
 
         self.send_button = Button(master, text="Send", command=self.send_message)
         self.send_button.grid(row=2, column=1, pady=20)
 
         master.bind('<Return>', self.return_press)
-
         self.username = PopupWindow(master, self.set_username, client)
+
+        threading.Thread(target=self.update_received).start()
+
+    def update_received(self):
+        while True:
+            messages = self.client.receive_all()
+            for message in messages:
+                self.messages_list.insert(END, f"{message['user']} > {message['data']}")
+                self.messages_list.yview(END)
 
     def set_username(self, username):
         self.username = username
@@ -45,7 +54,9 @@ class ClientUI:
             print("Username should be provided")
             exit(-1)
         message = self.message_input.get("1.0", END).rstrip()
-        self.messages_list.insert(END, f"{self.username} > message")
+        if not message:
+            return
+        self.messages_list.insert(END, f"{self.username} > {message}")
         self.messages_list.yview(END)
         self.message_input.delete('1.0', END)
         self.client.send_message(message)
@@ -55,7 +66,8 @@ class PopupWindow(object):
     def __init__(self, master, callback, client):
         self.callback = callback
         self.client = client
-        self.top = Toplevel(master)
+        self.top = Toplevel()
+        self.top.lift(aboveThis=master)
         self.top.geometry("280x150")
         self.label = Label(self.top, text="Enter your username:", font=("Helvetica", 16))
         self.label.grid(row=0, column=0)
@@ -63,6 +75,10 @@ class PopupWindow(object):
         self.entry.grid(row=1, column=0, padx=20, pady=15)
         self.button = Button(self.top, text='Ok', command=self.submit)
         self.button.grid(row=2, column=0)
+        self.top.bind('<Return>', self.return_press)
+
+    def return_press(self, event):
+        self.submit()
 
     def submit(self):
         username = self.entry.get().strip()
@@ -78,10 +94,10 @@ def main():
         connection_socket.connect((SERVER_HOST, SERVER_PORT))
         connection_socket.setblocking(False)
     except ConnectionRefusedError:
-        print("Not able to connect!")
+        print("Not able to connect to the socket!")
         exit(-1)
     client = Client(connection_socket)
-    client_ui = ClientUI(root, client)
+    ClientUI(root, client)
     root.mainloop()
 
 
