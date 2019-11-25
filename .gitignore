@@ -194,3 +194,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Custom
+.rar
+.zip
+.docx

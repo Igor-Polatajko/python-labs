@@ -18,33 +18,39 @@ class Server:
             read_sockets = select.select(self.socket_list, [], [])
 
             for _sock in read_sockets:
-                for sock in _sock:
-                    if sock == self.socket:
-                        client, client_address = self.socket.accept()
-                        print(f"Connection from {client_address}")
-                        username = self.receive_message(client)
-                        self.send_message(client, SERVER_NAME, f"Hello there, {username}")
-                        self.send_to_all(client, f"{username} joined the group!")
-                        self.socket_list.append(client)
-                        self.client_sockets[client] = username
+                for ready_socket in _sock:
+                    if ready_socket == self.socket:
+                        self._handle_new_connection()
                     else:
-                        message = self.receive_message(sock)
-                        if message:
-                            print(f"Message: {message} from {self.client_sockets[sock]}")
-                            self.send_to_all(sock, message)
-                        else:
-                            print(f"Closed connection from {sock}")
-                            self.socket_list.remove(sock)
-                            del self.client_sockets[sock]
+                        self._handle_message(ready_socket)
 
-    def send_to_all(self, client, message):
-        for sock in self.client_sockets.keys():
-            if sock != client:
-                if client in self.client_sockets.keys():
-                    from_user = self.client_sockets[client]
+    def _handle_new_connection(self):
+        client, client_address = self.socket.accept()
+        print(f"Connection from {client_address}")
+        username = self.receive_message(client)
+        self.send_message(client, SERVER_NAME, f"Hello there, {username}")
+        self.send_to_all(client, f"{username} joined the group!")
+        self.socket_list.append(client)
+        self.client_sockets[client] = username
+
+    def _handle_message(self, ready_socket):
+        message = self.receive_message(ready_socket)
+        if message:
+            print(f"Message: {message} from {self.client_sockets[ready_socket]}")
+            self.send_to_all(ready_socket, message)
+        else:
+            print(f"Closed connection from {ready_socket}")
+            self.socket_list.remove(ready_socket)
+            del self.client_sockets[ready_socket]
+
+    def send_to_all(self, sending_client, message):
+        for client_socket in self.client_sockets.keys():
+            if client_socket != sending_client:
+                if sending_client in self.client_sockets.keys():
+                    from_user = self.client_sockets[sending_client]
                 else:
                     from_user = SERVER_NAME
-                self.send_message(sock, from_user, message)
+                self.send_message(client_socket, from_user, message)
 
     def send_message(self, client, from_user, message):
         try:

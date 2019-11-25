@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from decimal import Decimal
 
 
 def calc_resulting_amount(current_amount, annual_interest_rate, deposit_duration):
