@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-import socket
 import threading
 from tkinter import Tk, Listbox, Scrollbar, END, Text, Button, W, Toplevel, Label, Entry
 
 from socketClient import Client
+from socketClientHelpers import UserData, Helpers
 
 SERVER_HOST = '127.0.0.1'
 SERVER_PORT = 9001
@@ -13,6 +13,7 @@ class ClientUI:
     def __init__(self, master, client):
         self.master = master
         self.client = client
+        self.user_data = UserData.get_instance()
 
         master.title("Chatroom")
         master.geometry("720x350")
@@ -31,10 +32,12 @@ class ClientUI:
         self.send_button = Button(master, text="Send", command=self.send_message)
         self.send_button.grid(row=2, column=1, pady=20)
 
-        master.bind('<Return>', self.return_press)
-        self.username = PopupWindow(master, self.set_username, client)
+        self.master.protocol("WM_DELETE_WINDOW", self.full_exit)
 
-        threading.Thread(target=self.update_received).start()
+        master.bind('<Return>', self.return_press)
+        PopupWindow(master, self.set_username, client)
+
+        threading.Thread(target=self.update_received, daemon=True).start()
 
     def update_received(self):
         while True:
@@ -44,22 +47,26 @@ class ClientUI:
                 self.messages_list.yview(END)
 
     def set_username(self, username):
-        self.username = username
+        self.user_data.set_username(username)
 
     def return_press(self, event):
         self.send_message()
 
     def send_message(self):
-        if not self.username:
+        if not self.user_data.get_user_name():
             print("Username should be provided")
             exit(-1)
         message = self.message_input.get("1.0", END).rstrip()
         if not message:
             return
-        self.messages_list.insert(END, f"{self.username} > {message}")
+        self.messages_list.insert(END, f"{self.user_data.get_user_name()} > {message}")
         self.messages_list.yview(END)
         self.message_input.delete('1.0', END)
         self.client.send_message(message)
+
+    def full_exit(self):
+        self.master.destroy()
+        exit()
 
 
 class PopupWindow(object):
@@ -89,14 +96,13 @@ class PopupWindow(object):
 
 def main():
     root = Tk()
-    connection_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    socket_helpers = Helpers(SERVER_HOST, SERVER_PORT)
     try:
-        connection_socket.connect((SERVER_HOST, SERVER_PORT))
-        connection_socket.setblocking(False)
+        connection_socket = socket_helpers.get_connection_socket()
     except ConnectionRefusedError:
         print("Not able to connect to the socket!")
         exit(-1)
-    client = Client(connection_socket)
+    client = Client(connection_socket, socket_helpers.reconnect)
     ClientUI(root, client)
     root.mainloop()
 

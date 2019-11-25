@@ -4,8 +4,9 @@ HEADER_LENGTH = 10
 
 
 class Client:
-    def __init__(self, connection_socket):
+    def __init__(self, connection_socket, reconnect_callback):
         self.__connection_socket = connection_socket
+        self.__reconnect_callback = reconnect_callback
 
     def receive_message(self):
         user_len = int(self.__connection_socket.recv(HEADER_LENGTH).decode('utf-8'))
@@ -26,8 +27,19 @@ class Client:
         except IOError as e:
             if e.errno == errno.EAGAIN or e.errno == errno.EWOULDBLOCK:
                 return messages
+            if e.errno == errno.ECONNREFUSED or e.errno == errno.ECONNRESET or e.errno == errno.ECONNABORTED:
+                self._reconnect()
+                return messages
             print("IO error")
             exit(-1)
         except Exception:
             print("Error")
             exit(-1)
+
+    def _reconnect(self):
+        try:
+            self.__connection_socket, username = self.__reconnect_callback()
+            self.send_message(username)
+            print("Successful reconnect")
+        except ConnectionRefusedError:
+            print("Reconnect attempt failed")
