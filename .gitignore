@@ -199,3 +199,5 @@ dmypy.json
 .rar
 .zip
 .docx
+
+venv
