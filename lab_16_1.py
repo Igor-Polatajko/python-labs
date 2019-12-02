@@ -36,7 +36,7 @@ def write_to_csv(file_path, data):
 
 def main():
     data = scrap_info()
-    write_to_csv("data.csv", data)
+    write_to_csv("lab_16_1.csv", data)
 
 
 if __name__ == '__main__':
