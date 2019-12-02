@@ -54,7 +54,7 @@ class NumbersConverterTest(unittest.TestCase):
         valid_roman_3 = 'MCCCLVI'
         self.assertTrue(_validate_roman(valid_roman_1))
         self.assertTrue(_validate_roman(valid_roman_2))
-        self.assertTrue(_validate_roman(valid_roman_1))
+        self.assertTrue(_validate_roman(valid_roman_3))
 
     def test_validate_roman_incorrect_data(self):
         incorrect_roman_1 = 'CMCMCCCCCCMCMXCIX'
@@ -89,3 +89,7 @@ class NumbersConverterTest(unittest.TestCase):
         number_data = {'handler': handler, 'number': 123}
         convert(number_data)
         handler.assert_called_once_with(number)
+
+
+if __name__ == '__main__':
+    unittest.main()
