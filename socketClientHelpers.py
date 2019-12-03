@@ -3,13 +3,16 @@ from time import sleep
 
 
 class UserData:
-    instance = None
+    _instance = None
+
+    def __new__(cls):
+        return cls.get_instance()
 
     @classmethod
     def get_instance(cls):
-        if not cls.instance:
-            cls.instance = UserData()
-        return cls.instance
+        if not cls._instance:
+            cls._instance = UserData()
+        return cls._instance
 
     def __init__(self):
         self._username = ''

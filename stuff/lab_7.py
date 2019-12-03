@@ -2,6 +2,7 @@
 import math
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def calc_groups_number(data_len):
@@ -87,8 +88,8 @@ def draw_table(data):
 def draw_plot(raw_data, data):
     x_lower = [min(row['data']) for row in data]
     wic = [(row['wic']) for row in data]
-    plt.plot(x_lower, wic)
-    plt.hist(raw_data, bins=len(data), density=True, cumulative=True)
+   # plt.plot(x_lower, wic)
+    plt.hist(raw_data, bins=len(data), density=True)
     plt.show()
 
 
@@ -120,6 +121,7 @@ def main():
             6.35, 5.88, 3.99, -1.25, -4.38, -3.5, -2.4, 4.51,
             -1.43, -4.47, 4.01, 5.33, 2.61, 3.8, 2.35, -2.59,
             -2.16, 2.06, -2.13, 3.03, 6.59, 2.13]
+    data = np.random.normal(110, 18, 1000)
     result_data = calc_interval_row(data)
 
     draw_table(result_data)
