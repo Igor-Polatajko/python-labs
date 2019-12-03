@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import math
 
+import matplotlib.pyplot as plt
+
 
 def calc_groups_number(data_len):
     return round(1 + 3.322 * math.log10(data_len))
@@ -26,6 +28,17 @@ def divide_on_periods(data):
     return result
 
 
+def calc_mode(input_list):
+    return max(set(input_list), key=input_list.count)
+
+
+def calc_median(input_list):
+    sorted_list = sorted(input_list)
+    if len(sorted_list) % 2:
+        return input_list[math.floor(len(sorted_list) / 2)]
+    return (input_list[int(len(sorted_list) / 2 - 1)] + input_list[int(len(sorted_list) / 2)]) / 2
+
+
 def calc_interval_row(data):
     divided_data = divide_on_periods(data)
     result_data = []
@@ -43,6 +56,9 @@ def calc_interval_row(data):
         wic += row['wi']
         row['fic'] = round(fic, 2)
         row['wic'] = round(wic, 2)
+        row['mo'] = calc_mode(els)
+        row['me'] = calc_median(els)
+        row['data'] = els
         result_data.append(row)
 
     return result_data
@@ -68,11 +84,35 @@ def draw_table(data):
         print()
 
 
-def draw_plot(data):
-    # plt.hist(list(map(lambda d: d['interval'], data)), list(map(lambda d: d['fi'], data)))
-    #  plt.hist(list(map(lambda d: d['fi'], data)), bins=30)
-    #  plt.show()
-    pass
+def draw_plot(raw_data, data):
+    x_lower = [min(row['data']) for row in data]
+    wic = [(row['wic']) for row in data]
+    plt.plot(x_lower, wic)
+    plt.hist(raw_data, bins=len(data), density=True, cumulative=True)
+    plt.show()
+
+
+def calc_average(data):
+    return sum([d['fi'] * d['middle'] for d in data]) / sum([d['fi'] for d in data])
+
+
+def calc_coefs(raw_data, data):
+    xi_fi = [d['fi'] * d['middle'] for d in data]
+
+    xa_weight = sum(xi_fi) / len(raw_data)
+    product_2 = []
+    product_3 = []
+    product_4 = []
+    for i in range(0, len(data)):
+        product_2.append(((data[i]['middle'] - xa_weight) ** 2) * data[i]['fi'])
+        product_3.append(((data[i]['middle'] - xa_weight) ** 3) * data[i]['fi'])
+        product_4.append(((data[i]['middle'] - xa_weight) ** 4) * data[i]['fi'])
+    d = sum(product_2) / len(raw_data)
+    sigma = math.sqrt(d)
+    m3 = sum(product_3) / len(raw_data)
+    m4 = sum(product_4) / len(raw_data)
+    return {'asymmetry': round(m3 / sigma ** 3, 3),
+            'excess': round((m4 / sigma ** 4) - 3, 3)}
 
 
 def main():
@@ -83,7 +123,11 @@ def main():
     result_data = calc_interval_row(data)
 
     draw_table(result_data)
-    draw_plot(result_data)
+    print(f"Average: {calc_average(result_data)}")
+    coefs = calc_coefs(data, result_data)
+    print(f"Asymmetry coefficient: {coefs['asymmetry']}")
+    print(f"Excess coefficient: {coefs['excess']}")
+    draw_plot(data, result_data)
 
 
 if __name__ == '__main__':
