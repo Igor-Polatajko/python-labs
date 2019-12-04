@@ -3,13 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <title>ToDo</title>
+    <script type="text/javascript"
+            src="{{ url_for('static', filename='requests.js') }}"></script>
 </head>
 <body>
 
+<h3><a href="/add">Add new item</a></h3>
+
 {% if items %}
-{% for item in items %}
-<p>{{ item.title }}</p>
-{% endfor %}
+<table>
+    <form method="GET">
+        <select name="field">
+            <option value="id">ID</option>
+            <option value="title">Title</option>
+            <option value="content">Content</option>
+            <option value="priority">Priority</option>
+            <option value="completed">Completed</option>
+        </select>
+        <input type="text" name="value" placeholder="value">
+        <input type="submit" value="Find">
+        {% if search_enabled %}
+        <a href="/">Show all</a>
+        {% endif %}
+    </form>
+    <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>Content</th>
+        <th>Priority</th>
+        <th>Completed</th>
+    </tr>
+    {% for item in items %}
+    <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.title }}</td>
+        <td>{{ item.content }}</td>
+        <td>{{ item.priority }}</td>
+        <td>{{ item.completed }}</td>
+        {% if item.completed == 'YES' %}
+        <td><p onclick="perform_post('items/{{ item.id }}/complete'">Uncomplete</p></td>
+        {% else %}
+        <td><p onclick="perform_post('items/{{ item.id }}/complete'">Complete</p></td>
+        {% endif %}
+        <td><a href="">Edit</a></td>
+        <td>
+            <button onclick="perform_delete('items/{{ item.id }}')">Remove</button>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
 {% else %}
 <h2>Collection is empty</h2>
 {% endif %}

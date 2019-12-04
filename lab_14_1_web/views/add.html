@@ -5,7 +5,7 @@
     <title>ToDo</title>
 </head>
 <body>
-<form action="{{ url_for('item') }}" method="post">
+<form action="{{ url_for('add') }}" method="post">
     {% if error %}
     <h3 style="color: red">{{error}}</h3>
     {% endif %}
@@ -29,5 +29,6 @@
     </table>
     {{ form.csrf_token }}
 </form>
+<h4><a href="/">To list</a></h4>
 </body>
 </html>

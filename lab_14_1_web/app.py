@@ -15,20 +15,28 @@ db = SQLAlchemy(app)
 
 class ToDoItem(db.Model):
     id = Column(Integer, primary_key=True)
-    title = Column(String, unique=True, nullable=False)
-    content = Column(String, unique=True, nullable=False)
-    priority = Column(String, unique=True, nullable=False)
-    completed = Column(String, unique=True, nullable=False)
+    title = Column(String, unique=False, nullable=False)
+    content = Column(String, unique=False, nullable=False)
+    priority = Column(String, unique=False, nullable=False)
+    completed = Column(String, unique=False, nullable=False)
 
 
 @app.route('/')
 def index():
-    items = ToDoItem.query.all()
-    return render_template('index.html', items=items)
+    field = request.args.get("field")
+    value = request.args.get("value")
+    if field is not None and value is not None:
+        search_enabled = True
+        cls_field = getattr(ToDoItem, field)
+        items = ToDoItem.query.filter(cls_field == value or cls_field.contains(value)).all()
+    else:
+        search_enabled = False
+        items = ToDoItem.query.all()
+    return render_template('index.html', items=items, search_enabled=search_enabled)
 
 
-@app.route('/item', methods=['GET', 'POST'])
-def item():
+@app.route('/add', methods=['GET', 'POST'])
+def add():
     form = AddEditForm()
     error = None
     if request.method == 'POST':
@@ -41,7 +49,24 @@ def item():
             return redirect('/')
         else:
             error = "Fill all the fields!"
-    return render_template('add_edit.html', form=form, error=error)
+    return render_template('add.html', form=form, error=error)
+
+
+@app.route('/edit/<item_id>', methods=['GET', 'POST'])
+def edit(item_id):
+    pass
+
+
+@app.route('/items/<item_id>', methods=['DELETE'])
+def delete(item_id):
+    ToDoItem.query.filter(ToDoItem.id == item_id).delete()
+    db.session.commit()
+    return '', 204
+
+
+@app.route('/items/<item_id>/<action>', methods=['POST'])
+def status_change(item_id, action):
+    return '', 200
 
 
 if __name__ == '__main__':
