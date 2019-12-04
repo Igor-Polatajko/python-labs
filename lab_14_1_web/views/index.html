@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ToDo</title>
+</head>
+<body>
+
+{% if items %}
+{% for item in items %}
+<p>{{ item.title }}</p>
+{% endfor %}
+{% else %}
+<h2>Collection is empty</h2>
+{% endif %}
+</body>
+</html>
