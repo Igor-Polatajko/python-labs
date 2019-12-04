@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>ToDo</title>
-    <script type="text/javascript"
-            src="{{ url_for('static', filename='requests.js') }}"></script>
 </head>
 <body>
 
 <h3><a href="/add">Add new item</a></h3>
-
+{% if search_enabled %}
+<p><a href="/">Show full list</a></p>
+{% endif %}
 {% if items %}
 <table>
     <form method="GET">
@@ -22,9 +22,6 @@
         </select>
         <input type="text" name="value" placeholder="value">
         <input type="submit" value="Find">
-        {% if search_enabled %}
-        <a href="/">Show all</a>
-        {% endif %}
     </form>
     <tr>
         <th>ID</th>
@@ -40,14 +37,24 @@
         <td>{{ item.content }}</td>
         <td>{{ item.priority }}</td>
         <td>{{ item.completed }}</td>
+        <td><a href="/edit/{{ item.id }}">Edit</a></td>
         {% if item.completed == 'YES' %}
-        <td><p onclick="perform_post('items/{{ item.id }}/complete'">Uncomplete</p></td>
-        {% else %}
-        <td><p onclick="perform_post('items/{{ item.id }}/complete'">Complete</p></td>
-        {% endif %}
-        <td><a href="">Edit</a></td>
         <td>
-            <button onclick="perform_delete('items/{{ item.id }}')">Remove</button>
+            <form method="post" action="/state/{{ item.id }}/uncomplete">
+                <input type="submit" value="Uncomplete">
+            </form>
+        </td>
+        {% else %}
+        <td>
+            <form method="post" action="/state/{{ item.id }}/complete">
+                <input type="submit" value="Complete">
+            </form>
+        </td>
+        {% endif %}
+        <td>
+            <form method="post" action="/delete/{{ item.id }}">
+                <input type="submit" value="Remove">
+            </form>
         </td>
     </tr>
     {% endfor %}
