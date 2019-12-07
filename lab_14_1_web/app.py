@@ -15,15 +15,26 @@ def _check_priority_validity(priority):
 def index():
     field = request.args.get("field")
     value = request.args.get("value")
+    sort = request.args.get("sort")
+    prev_sort = request.args.get("prev_sort")
+    ascending_order = request.args.get("asc")
+    sort_link = ''
     if field is not None and value is not None:
         search_enabled = True
         if hasattr(ToDoItem, field):
             cls_field = getattr(ToDoItem, field)
             items = ToDoItem.query.filter(cls_field == value or cls_field.contains(value)).all()
+            sort_link = f"&field={field}&value={value}"
     else:
         search_enabled = False
         items = ToDoItem.query.all()
-    return render_template('index.html', items=items, search_enabled=search_enabled)
+
+    if sort is not None and items:
+        items.sort(key=lambda i: getattr(i, sort), reverse=(sort == prev_sort and ascending_order == '0'))
+        ascending_order = '1' if ascending_order == '0' else '0'
+        sort_link += f"&prev_sort={sort}&asc={ascending_order}"
+    return render_template('index.html', items=items, search_enabled=search_enabled,
+                           sort=sort, sort_link=sort_link)
 
 
 @app.route('/add', methods=['GET', 'POST'])

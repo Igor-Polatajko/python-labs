@@ -24,11 +24,11 @@
         <input type="submit" value="Find">
     </form>
     <tr>
-        <th>ID</th>
-        <th>Title</th>
-        <th>Content</th>
-        <th>Priority</th>
-        <th>Completed</th>
+        <th><a href="/?sort=id{{ sort_link }}">ID</a></th>
+        <th><a href="/?sort=title{{ sort_link }}">Title</a></th>
+        <th><a href="/?sort=content{{ sort_link }}">Content</a></th>
+        <th><a href="/?sort=priority{{ sort_link }}">Priority</a></th>
+        <th><a href="/?sort=completed{{ sort_link }}">Completed</a></th>
     </tr>
     {% for item in items %}
     <tr>
