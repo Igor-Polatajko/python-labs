@@ -31,7 +31,8 @@ def index():
 
     if sort is not None and items:
         items.sort(key=lambda i: getattr(i, sort), reverse=(sort == prev_sort and ascending_order == '0'))
-        ascending_order = '1' if ascending_order == '0' else '0'
+        if sort == prev_sort or ascending_order != '0':
+            ascending_order = '1' if ascending_order == '0' else '0'
         sort_link += f"&prev_sort={sort}&asc={ascending_order}"
     return render_template('index.html', items=items, search_enabled=search_enabled,
                            sort=sort, sort_link=sort_link)
