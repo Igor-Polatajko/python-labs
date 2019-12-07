@@ -1,24 +1,10 @@
 #!/usr/bin/env python
-import os
 
-from flask import Flask, render_template, redirect, request, abort
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, String
+from flask import render_template, redirect, request, abort
 
+from lab_14_1_web.app_config import db, app
 from lab_14_1_web.forms import AddEditForm
-
-app = Flask(__name__, template_folder='views')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///items.db'
-app.config['SECRET_KEY'] = os.urandom(32)
-db = SQLAlchemy(app)
-
-
-class ToDoItem(db.Model):
-    id = Column(Integer, primary_key=True)
-    title = Column(String, unique=False, nullable=False)
-    content = Column(String, unique=False, nullable=False)
-    priority = Column(String, unique=False, nullable=False)
-    completed = Column(String, unique=False, nullable=False)
+from lab_14_1_web.models import ToDoItem
 
 
 def _check_priority_validity(priority):
