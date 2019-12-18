@@ -16,7 +16,7 @@ def main():
         print("Not able to connect to the socket!")
         exit(-1)
     client = Client(connection_socket, socket_helpers.reconnect)
-    user_data = UserData.get_instance()
+    user_data = UserData()
     user_data.set_username(input("Enter your username: "))
     client.send_message(user_data.get_user_name())
     while True:

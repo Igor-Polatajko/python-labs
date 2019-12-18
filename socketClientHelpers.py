@@ -6,15 +6,13 @@ class UserData:
     _instance = None
 
     def __new__(cls):
-        return cls.get_instance()
-
-    @classmethod
-    def get_instance(cls):
-        if not cls._instance:
-            cls._instance = UserData()
+        if not isinstance(cls._instance, cls):
+            cls._instance = object.__new__(UserData)
         return cls._instance
 
     def __init__(self):
+        if hasattr(self, '_username'):
+            return
         self._username = ''
 
     def set_username(self, username):
@@ -38,4 +36,4 @@ class Helpers:
     def reconnect(self):
         print("Reconnection timeout 5 sec")
         sleep(5)
-        return self.get_connection_socket(), UserData.get_instance().get_user_name()
+        return self.get_connection_socket(), UserData().get_user_name()

@@ -13,7 +13,7 @@ class ClientUI:
     def __init__(self, master, client):
         self.master = master
         self.client = client
-        self.user_data = UserData.get_instance()
+        self.user_data = UserData()
 
         master.title("Chatroom")
         master.geometry("720x350")
