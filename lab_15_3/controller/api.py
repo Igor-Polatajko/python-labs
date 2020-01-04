@@ -1,10 +1,13 @@
 from lab_15_3.core.FlaskBaseController import route
+from lab_15_3.exception.interceptor import exception_interceptor
+from lab_15_3.service.CurrencyNumberToWrittenFormTransformService import CurrencyNumberToWrittenFormTransformService
 
 
 class ApiController:
-    @route('/api')
-    def hello1(self):
-        return "Hello World !"
+    def __init__(self):
+        self.transform_service = CurrencyNumberToWrittenFormTransformService()
 
-    def m(self):
-        pass
+    @route('/api/transform/<value>')
+    @exception_interceptor
+    def transform(self, value):
+        return self.transform_service.transform(value)
